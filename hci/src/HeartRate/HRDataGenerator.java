@@ -60,7 +60,7 @@ public class HRDataGenerator extends DataGenerator implements Runnable  {
 
             createAndNotify(timeStamp, generateValues(heartState));
             try {
-                Thread.sleep((long)(frequency * 1000));
+                Thread.sleep((long)(frequency));
             } catch (InterruptedException ex) {
             }
         }
