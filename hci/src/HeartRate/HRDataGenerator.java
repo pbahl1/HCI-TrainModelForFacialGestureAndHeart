@@ -85,7 +85,7 @@ public class HRDataGenerator extends DataGenerator implements Runnable  {
 
         int randomNum = ThreadLocalRandom.current().nextInt(startRange, endRange + 1);
         List<Double> values = new ArrayList<>();
-        double toAdd = scale(randomNum, 60, 140, 0.0, 1.0);
+        double toAdd = scale(randomNum, 60, 190, 0.0, 1.0);
         values.add(toAdd);
 
         return values;
