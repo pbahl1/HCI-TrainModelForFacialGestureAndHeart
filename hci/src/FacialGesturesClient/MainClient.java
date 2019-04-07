@@ -1,5 +1,9 @@
 package FacialGesturesClient;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -9,9 +13,12 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 public class MainClient extends JFrame {
+	
+	static double[] plotArray = null;
 
 	private HeartClient heart;
 	private SkinClient skin;
@@ -19,13 +26,32 @@ public class MainClient extends JFrame {
 	private FaceClient face;
 	private BCIClient bci;
 	private static MainClient instance = null;
-
+	private static final String SMILE_FILE = "smile.png";
+	private static final String NEUTRAL_FILE = "neutral.png";
+	private static final String SAD_FILE = "sad.png";
+	private static BufferedImage predictImage = null;
+	private static BufferedImage image = new BufferedImage(1280, 768,
+            BufferedImage.TYPE_INT_RGB);
+	private static JPanel canvas = new JPanel() {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            g.drawImage(image, 4, 8, this);
+            g.setColor (Color.white);
+    		int x = getWidth()/2;
+    		int y = getHeight()/2;
+    		g.translate(x, y);
+    		g.drawLine (-x, 0, x+50, 0);
+    		g.drawLine (0, -y, 0, y);       
+        }
+    };
 	static HashMap<Integer, Double> faceHeartData = new HashMap<>();
 
 	private static JTabbedPane client = new JTabbedPane();
 	static double[] passArray = null;
 	public MainClient() {
 		passArray = new double[9];
+		plotArray = new double[3];
 	}
 
 	private void shutdown() {
@@ -93,6 +119,7 @@ public class MainClient extends JFrame {
 				passArray[6] = (passArray[1] + valuePleasure) / 2;
 			else
 				passArray[6] = valuePleasure;
+			plotArray[0] = passArray[6];
 
 			double valueArousal = (passArray[2] + passArray[3] + passArray[4] + passArray[5]) / 4;
 
@@ -100,6 +127,9 @@ public class MainClient extends JFrame {
 				passArray[7] = (passArray[4] + valueArousal) / 2;
 			else
 				passArray[7] = valueArousal;
+			plotArray[1] = passArray[7];
+			
+			MainClient.plot(plotArray[0], plotArray[1]);
 
 			int SAD = 1;
 			int MODERATE = 2;
@@ -121,13 +151,24 @@ public class MainClient extends JFrame {
 				sb.append(element);
 				sb.append(",");
 			}
-			sb.append("\n");
+			sb.append("\n");			
+			
+			//MainClient.canvas.repaint();
 			pw.write(sb.toString());
 
 			for (int i = 0; i < 9; i++)
 				System.out.print(passArray[i] + ",");
 			faceHeartData = new HashMap<>();
 		}
+	}
+public static JPanel plot(double d, double e) {
+		
+		Graphics g = image.getGraphics();
+	    g.setColor(Color.red);
+	    g.drawRect(145 +(int) (d*10), (int) (e*10), 4, 4);
+	    g.dispose();
+	    MainClient.canvas.repaint();
+	    return MainClient.canvas;
 	}
 
 	public static void main(String[] args) {
@@ -145,9 +186,20 @@ public class MainClient extends JFrame {
 		client.addTab("BCI", primaryClient.bci.processPanelBCI("BCI"));
 		client.addTab("Eye", primaryClient.eye.processPanelEye("Eye"));
 		client.addTab("Face", primaryClient.face.processPanelFace("Face"));
-
-		primaryClient.setContentPane(client);
-
+		JPanel outerPanel = new JPanel();
+	    outerPanel.setBackground(Color.white);
+	    outerPanel.setLayout(new GridLayout(1,2));
+	    outerPanel.add(client);
+		JPanel innerPanel = new JPanel();
+	    innerPanel.setLayout(new GridLayout(2,1));
+	    JPanel plot = new JPanel();
+	    JPanel predict = new JPanel(); 
+	    plot.setBackground(Color.white);
+	    outerPanel.setBackground(Color.white);
+	    innerPanel.add(plot(2.5,3.6));
+	    innerPanel.add(predict);
+	    outerPanel.add(innerPanel);
+		primaryClient.add(outerPanel);
 		primaryClient.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosing(java.awt.event.WindowEvent e) {
